@@ -1,0 +1,27 @@
+[
+  {
+    "week": 1,
+    "info": "Fertilization begins. The sperm meets the egg and forms a zygote.",
+    "tips": "Take prenatal vitamins and maintain a healthy diet.",
+    "imageUrl": "https://via.placeholder.com/300x150.png?text=Week+1"
+  },
+  {
+    "week": 2,
+    "info": "The embryo begins developing. Cells start forming essential organs.",
+    "tips": "Focus on hydration and gentle exercise.",
+    "imageUrl": "https://via.placeholder.com/300x150.png?text=Week+2"
+  },
+  {
+    "week": 3,
+    "info": "Hormones start increasing. Implantation occurs in the uterus.",
+    "tips": "Rest well and avoid alcohol and smoking.",
+    "imageUrl": "https://via.placeholder.com/300x150.png?text=Week+3"
+  },
+  
+  {
+    "week": 40,
+    "info": "Final preparations for birth. Baby fully developed.",
+    "tips": "Prepare your hospital bag and finalize birth plan.",
+    "imageUrl": "https://via.placeholder.com/300x150.png?text=Week+40"
+  }
+]

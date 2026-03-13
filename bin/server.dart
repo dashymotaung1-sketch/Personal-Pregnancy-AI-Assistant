@@ -1,46 +1,30 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:shelf/shelf.dart';
-import 'package:shelf/shelf_io.dart' as io;
 import 'package:shelf_router/shelf_router.dart';
-import '../lib/data.dart';
+import 'package:shelf/shelf_io.dart';
+import 'package:shelf_cors_headers/shelf_cors_headers.dart';
+
+List stages = [];
 
 void main() async {
+  // Load stages.json
+  final file = File('stages.json');
+  if (await file.exists()) {
+    stages = jsonDecode(await file.readAsString());
+  } else {
+    print("stages.json not found!");
+  }
+
   final router = Router();
+  router.get('/stages', (Request req) =>
+      Response.ok(jsonEncode(stages), headers: {'Content-Type': 'application/json'}));
 
-  // Home endpoint
-  router.get('/', (Request req) {
-    return Response.ok(jsonEncode({"message": "Welcome to Pregnancy AI Assistant!"}),
-        headers: {'Content-Type': 'application/json'});
-  });
-
-  // Get pregnancy stages
-  router.get('/stages', (Request req) {
-    return Response.ok(jsonEncode(stages),
-        headers: {'Content-Type': 'application/json'});
-  });
-
-  // Get daily tips
-  router.get('/tips', (Request req) {
-    return Response.ok(jsonEncode(tips),
-        headers: {'Content-Type': 'application/json'});
-  });
-
-  // Example: Get info for a specific week
-  router.get('/stages/<week>', (Request req, String week) {
-    final weekInt = int.tryParse(week);
-    if (weekInt == null || weekInt < 1 || weekInt > stages.length) {
-      return Response.notFound(jsonEncode({"error": "Week not found"}));
-    }
-    return Response.ok(jsonEncode(stages[weekInt - 1]),
-        headers: {'Content-Type': 'application/json'});
-  });
-
-  // Start server
-  final handler = const Pipeline()
-      .addMiddleware(logRequests())
+  // Serve
+  var handler = const Pipeline()
+      .addMiddleware(corsHeaders())
       .addHandler(router);
 
-  final server = await io.serve(handler, InternetAddress.anyIPv4, 8080);
+  final server = await serve(handler, InternetAddress.anyIPv4, 8080);
   print('Server running on http://${server.address.address}:${server.port}');
 }

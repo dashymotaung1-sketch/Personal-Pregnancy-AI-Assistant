@@ -1,70 +1,77 @@
 import 'package:flutter/material.dart';
-import '../services/ai_service.dart';
+import 'chat_service.dart';
 
 class ChatScreen extends StatefulWidget {
-  final AIService aiService;
-
-  ChatScreen({required this.aiService});
+  final ChatService chatService;
+  const ChatScreen({super.key, required this.chatService});
 
   @override
-  _ChatScreenState createState() => _ChatScreenState();
+  State<ChatScreen> createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _controller = TextEditingController();
-  String _answer = '';
-  bool _loading = false;
+  final _controller = TextEditingController();
+  final List<Map<String, String>> messages = [];
 
-  void askAI() async {
-    final question = _controller.text;
-    if (question.isEmpty) return;
-
+  void sendMessage() async {
+    if (_controller.text.isEmpty) return;
+    final userMsg = _controller.text;
     setState(() {
-      _loading = true;
-      _answer = '';
+      messages.add({"role": "user", "text": userMsg});
+      _controller.clear();
     });
 
-    final response = await widget.aiService.askQuestion(question);
-
+    final response = await widget.chatService.askQuestion(userMsg);
     setState(() {
-      _answer = response;
-      _loading = false;
+      messages.add({"role": "assistant", "text": response});
     });
-
-    _controller.clear();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Pregnancy AI Assistant')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                hintText: 'Ask any pregnancy question...',
-                border: OutlineInputBorder(),
-              ),
+      appBar: AppBar(title: const Text("Pregnancy AI Chat")),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                final msg = messages[index];
+                final isUser = msg['role'] == 'user';
+                return ListTile(
+                  title: Align(
+                    alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isUser ? Colors.pink[100] : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(msg['text']!),
+                    ),
+                  ),
+                );
+              },
             ),
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _loading ? null : askAI,
-              child: _loading ? CircularProgressIndicator() : Text('Ask'),
-            ),
-            SizedBox(height: 20),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Text(
-                  _answer,
-                  style: TextStyle(fontSize: 18),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: const InputDecoration(
+                      hintText: "Ask a pregnancy question...",
+                    ),
+                  ),
                 ),
-              ),
+                IconButton(onPressed: sendMessage, icon: const Icon(Icons.send))
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

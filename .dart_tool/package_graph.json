@@ -5,12 +5,29 @@
   "packages": [
     {
       "name": "pregnancy_ai_server",
-      "version": "0.1.0",
+      "version": "0.0.1",
       "dependencies": [
-        "http",
-        "shelf"
+        "shelf",
+        "shelf_cors_headers",
+        "shelf_router"
       ],
       "devDependencies": []
+    },
+    {
+      "name": "shelf_cors_headers",
+      "version": "0.1.5",
+      "dependencies": [
+        "shelf"
+      ]
+    },
+    {
+      "name": "shelf_router",
+      "version": "1.1.4",
+      "dependencies": [
+        "http_methods",
+        "meta",
+        "shelf"
+      ]
     },
     {
       "name": "shelf",
@@ -25,14 +42,14 @@
       ]
     },
     {
-      "name": "http",
-      "version": "1.6.0",
-      "dependencies": [
-        "async",
-        "http_parser",
-        "meta",
-        "web"
-      ]
+      "name": "meta",
+      "version": "1.18.1",
+      "dependencies": []
+    },
+    {
+      "name": "http_methods",
+      "version": "1.1.1",
+      "dependencies": []
     },
     {
       "name": "stream_channel",
@@ -75,16 +92,6 @@
         "collection",
         "meta"
       ]
-    },
-    {
-      "name": "web",
-      "version": "1.1.1",
-      "dependencies": []
-    },
-    {
-      "name": "meta",
-      "version": "1.18.1",
-      "dependencies": []
     },
     {
       "name": "typed_data",

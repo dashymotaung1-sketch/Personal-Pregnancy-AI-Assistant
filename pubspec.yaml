@@ -1,11 +1,11 @@
 name: pregnancy_ai_server
-description: A backend server for Pregnancy AI Assistant
-version: 0.1.0
+description: Dart backend for Pregnancy AI
+version: 0.0.1
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
-  # Add any Dart packages you need here, e.g. http, shelf, etc.
-  http: ^1.2.0
   shelf: ^1.4.0
+  shelf_router: ^1.1.4
+  shelf_cors_headers: ^0.1.5

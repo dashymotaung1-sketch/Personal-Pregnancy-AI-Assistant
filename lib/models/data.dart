@@ -1,13 +1,12 @@
-// Sample pregnancy data
 final stages = [
-  {"week": 1, "info": "First week: ovulation and fertilization."},
-  {"week": 2, "info": "Second week: implantation begins."},
-  {"week": 3, "info": "Third week: early development of embryo."},
-  // Add more weeks as needed
+  {"week": 1, "info": "Week 1: Fertilization begins."},
+  {"week": 2, "info": "Week 2: The embryo begins developing."},
+  {"week": 3, "info": "Week 3: Hormones start increasing."},
+  {"week": 4, "info": "Week 4: Early pregnancy symptoms may appear."}
 ];
 
 final tips = [
-  {"day": 1, "tip": "Drink plenty of water."},
-  {"day": 2, "tip": "Take prenatal vitamins."},
-  {"day": 3, "tip": "Avoid alcohol and smoking."},
-];
+  {"tip": "Drink plenty of water."},
+  {"tip": "Take prenatal vitamins."},
+  {"tip": "Avoid alcohol and smoking."},
+  {"tip": "Get enough rest."}

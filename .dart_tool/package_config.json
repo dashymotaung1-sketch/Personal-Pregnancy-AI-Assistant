@@ -14,10 +14,10 @@
       "languageVersion": "3.4"
     },
     {
-      "name": "http",
-      "rootUri": "file:///home/wtc10/.pub-cache/hosted/pub.dev/http-1.6.0",
+      "name": "http_methods",
+      "rootUri": "file:///home/wtc10/.pub-cache/hosted/pub.dev/http_methods-1.1.1",
       "packageUri": "lib/",
-      "languageVersion": "3.4"
+      "languageVersion": "2.12"
     },
     {
       "name": "http_parser",
@@ -42,6 +42,18 @@
       "rootUri": "file:///home/wtc10/.pub-cache/hosted/pub.dev/shelf-1.4.2",
       "packageUri": "lib/",
       "languageVersion": "3.4"
+    },
+    {
+      "name": "shelf_cors_headers",
+      "rootUri": "file:///home/wtc10/.pub-cache/hosted/pub.dev/shelf_cors_headers-0.1.5",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "shelf_router",
+      "rootUri": "file:///home/wtc10/.pub-cache/hosted/pub.dev/shelf_router-1.1.4",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
     },
     {
       "name": "source_span",
@@ -78,12 +90,6 @@
       "rootUri": "file:///home/wtc10/.pub-cache/hosted/pub.dev/typed_data-1.4.0",
       "packageUri": "lib/",
       "languageVersion": "3.5"
-    },
-    {
-      "name": "web",
-      "rootUri": "file:///home/wtc10/.pub-cache/hosted/pub.dev/web-1.1.1",
-      "packageUri": "lib/",
-      "languageVersion": "3.4"
     },
     {
       "name": "pregnancy_ai_server",
