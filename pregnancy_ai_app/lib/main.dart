@@ -6,6 +6,8 @@ import 'package:universal_io/io.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'chat_service.dart';
 import 'chat_screen.dart';
@@ -17,13 +19,14 @@ void main() async {
   runApp(const PregnancyApp());
 }
 
-// Notifications helper
+// -------------------
+// Notifications Helper
+// -------------------
 class Notifications {
   static final _plugin = FlutterLocalNotificationsPlugin();
 
   static Future<void> init() async {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) return;
-
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
     const settings = InitializationSettings(android: android);
     await _plugin.initialize(settings);
@@ -31,13 +34,11 @@ class Notifications {
 
   static Future<void> showDailyTip(String tip) async {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) {
-      print("Daily tip: $tip"); // Web placeholder
+      print("Daily tip: $tip");
       return;
     }
-
     final now = tz.TZDateTime.now(tz.local);
     final scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, 9, 0);
-
     const androidDetails = AndroidNotificationDetails(
       'daily_tip_channel',
       'Daily Pregnancy Tip',
@@ -46,7 +47,6 @@ class Notifications {
       priority: Priority.high,
     );
     const details = NotificationDetails(android: androidDetails);
-
     await _plugin.zonedSchedule(
       0,
       'Daily Pregnancy Tip',
@@ -61,6 +61,8 @@ class Notifications {
   }
 }
 
+// -------------------
+// Main App
 // -------------------
 class PregnancyApp extends StatelessWidget {
   const PregnancyApp({super.key});
@@ -90,27 +92,28 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _lmpController = TextEditingController();
   DateTime? _lmpDate;
 
-  void goToHome() {
+  void goToDashboard() {
     if (_nameController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter your name')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Please enter your name')));
       return;
     }
     try {
       _lmpDate = DateTime.parse(_lmpController.text);
     } catch (_) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid date format')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Invalid date format')));
       return;
     }
 
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-          builder: (_) => HomeScreen(
-                userName: _nameController.text,
-                lmpDate: _lmpDate!,
-              )),
+        builder: (_) => DashboardScreen(
+          userName: _nameController.text,
+          lmpDate: _lmpDate!,
+        ),
+      ),
     );
   }
 
@@ -135,7 +138,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: goToHome,
+              onPressed: goToDashboard,
               child: const Text("Continue"),
             )
           ],
@@ -146,225 +149,422 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 }
 
 // -------------------
-// Home Screen
+// Dashboard Screen
 // -------------------
-class Appointment {
-  String title;
-  DateTime date;
-  Appointment({required this.title, required this.date});
+class DashboardScreen extends StatelessWidget {
+  final String userName;
+  final DateTime lmpDate;
+
+  const DashboardScreen({super.key, required this.userName, required this.lmpDate});
+
+  @override
+  Widget build(BuildContext context) {
+    final features = [
+      {'title': 'Home', 'icon': Icons.home, 'route': '/home'},
+      {'title': 'Kick Counter', 'icon': Icons.directions_run, 'route': '/kick'},
+      {'title': 'Weight Tracker', 'icon': Icons.monitor_weight, 'route': '/weight'},
+      {'title': 'Hospital Bag', 'icon': Icons.shopping_bag, 'route': '/bag'},
+      {'title': 'Contraction Timer', 'icon': Icons.timer, 'route': '/contraction'},
+      {'title': 'Emergency Contacts', 'icon': Icons.phone, 'route': '/contacts'},
+      {'title': 'AI Assistant', 'icon': Icons.chat, 'route': '/chat'},
+      {'title': 'Reminders', 'icon': Icons.alarm, 'route': '/reminders'},
+      {'title': 'Doctor Appointments', 'icon': Icons.medical_services, 'route': '/appointments'},
+      {'title': 'Medication Reminders', 'icon': Icons.medication, 'route': '/medications'},
+    ];
+
+    return Scaffold(
+      appBar: AppBar(title: Text('Dashboard, $userName')),
+      body: GridView.count(
+        padding: const EdgeInsets.all(16),
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        children: features.map((f) {
+          return GestureDetector(
+            onTap: () {
+              switch (f['route']) {
+                case '/home':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => HomeScreen(userName: userName, lmpDate: lmpDate)),
+                  );
+                  break;
+                case '/kick':
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => KickCounterScreen()));
+                  break;
+                case '/weight':
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => WeightTrackerScreen()));
+                  break;
+                case '/bag':
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => HospitalBagScreen()));
+                  break;
+                case '/contraction':
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => ContractionTimerScreen()));
+                  break;
+                case '/contacts':
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => EmergencyContactsScreen()));
+                  break;
+                case '/chat':
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => ChatScreen(chatService: ChatService(apiKey: "<YOUR_OPENAI_API_KEY>"))));
+                  break;
+                case '/reminders':
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => RemindersScreen()));
+                  break;
+                case '/appointments':
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => DoctorAppointmentsScreen()));
+                  break;
+                case '/medications':
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => MedicationRemindersScreen()));
+                  break;
+              }
+            },
+            child: Card(
+              elevation: 4,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(f['icon'] as IconData, size: 48, color: Colors.pink),
+                  const SizedBox(height: 8),
+                  Text(f['title'] as String, textAlign: TextAlign.center),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
 }
 
-class HomeScreen extends StatefulWidget {
+// -------------------
+// Home Screen
+// -------------------
+class HomeScreen extends StatelessWidget {
   final String userName;
   final DateTime lmpDate;
 
   const HomeScreen({super.key, required this.userName, required this.lmpDate});
 
+  int getCurrentWeek() {
+    final now = DateTime.now();
+    final days = now.difference(lmpDate).inDays;
+    return (days / 7).floor() + 1;
+  }
+
+  Map<String, String> getBabySize(int week) {
+    if (week <= 12) return {'name': 'Plum', 'image': 'https://i.imgur.com/1Plum.png'};
+    if (week <= 16) return {'name': 'Avocado', 'image': 'https://i.imgur.com/Avocado.png'};
+    if (week <= 20) return {'name': 'Banana', 'image': 'https://i.imgur.com/Banana.png'};
+    if (week <= 24) return {'name': 'Corn', 'image': 'https://i.imgur.com/Corn.png'};
+    if (week <= 28) return {'name': 'Eggplant', 'image': 'https://i.imgur.com/Eggplant.png'};
+    if (week <= 32) return {'name': 'Squash', 'image': 'https://i.imgur.com/Squash.png'};
+    if (week <= 36) return {'name': 'Honeydew', 'image': 'https://i.imgur.com/Honeydew.png'};
+    return {'name': 'Pumpkin', 'image': 'https://i.imgur.com/Pumpkin.png'};
+  }
+
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  Widget build(BuildContext context) {
+    final week = getCurrentWeek();
+    final baby = getBabySize(week);
+
+    return Scaffold(
+      appBar: AppBar(title: Text("Hello, $userName")),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Current pregnancy week: $week", style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 8),
+            Text("Baby size: ${baby['name']}", style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 8),
+            Image.network(baby['image']!, height: 150, width: 150),
+            const SizedBox(height: 8),
+            const Text("Quick tip: Stay healthy, drink water!", style: TextStyle(fontSize: 18)),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  // Appointments
-  List<Appointment> appointments = [];
+// -------------------
+// Kick Counter Screen
+// -------------------
+class KickCounterScreen extends StatefulWidget {
+  @override
+  State<KickCounterScreen> createState() => _KickCounterScreenState();
+}
 
-  void addAppointment(String title, DateTime date) {
-    appointments.add(Appointment(title: title, date: date));
-    setState(() {});
-  }
+class _KickCounterScreenState extends State<KickCounterScreen> {
+  int kicks = 0;
 
-  void showAddAppointmentDialog() {
-    final titleController = TextEditingController();
-    DateTime? selectedDate;
-
-    showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text("Add Appointment"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(labelText: "Title"),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    final date = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 365)));
-                    if (date != null) selectedDate = date;
-                  },
-                  child: const Text("Select Date"),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    if (titleController.text.isNotEmpty &&
-                        selectedDate != null) {
-                      addAppointment(titleController.text, selectedDate!);
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text("Save"))
-            ],
-          );
-        });
-  }
-
-  // Pregnancy calculation
-  int? _currentWeek;
-  String? _trimester;
-  DateTime? _dueDate;
-  List stages = [];
-
-  String getBackendUrl() {
-    if (kIsWeb) return "http://127.0.0.1:8080";
-    if (Platform.isAndroid) return "http://10.0.2.2:8080";
-    if (Platform.isIOS) return "http://127.0.0.1:8080";
-    return "http://127.0.0.1:8080";
-  }
-
-  Future<void> fetchStages() async {
-    try {
-      final response = await http.get(Uri.parse("${getBackendUrl()}/stages"));
-      if (response.statusCode == 200) {
-        setState(() => stages = jsonDecode(response.body));
-      }
-    } catch (e) {
-      debugPrint("Failed to fetch stages: $e");
-    }
-  }
-
-  void calculatePregnancy() {
-    final now = DateTime.now();
-    final days = now.difference(widget.lmpDate).inDays;
-    final week = (days / 7).floor() + 1;
-    _currentWeek = week;
-    _dueDate = widget.lmpDate.add(const Duration(days: 280));
-
-    if (week <= 13) _trimester = "First trimester";
-    else if (week <= 27) _trimester = "Second trimester";
-    else _trimester = "Third trimester";
-
-    if (_currentWeek! <= stages.length) {
-      Notifications.showDailyTip(stages[_currentWeek! - 1]['tips']);
-    }
-  }
+  void addKick() => setState(() => kicks++);
 
   @override
-  void initState() {
-    super.initState();
-    calculatePregnancy();
-    fetchStages();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Kick Counter")),
+      body: Center(
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Text("Kicks: $kicks", style: const TextStyle(fontSize: 24)),
+          const SizedBox(height: 16),
+          ElevatedButton(onPressed: addKick, child: const Text("Add Kick")),
+        ]),
+      ),
+    );
+  }
+}
+
+// -------------------
+// Weight Tracker Screen
+// -------------------
+class WeightTrackerScreen extends StatefulWidget {
+  @override
+  State<WeightTrackerScreen> createState() => _WeightTrackerScreenState();
+}
+
+class _WeightTrackerScreenState extends State<WeightTrackerScreen> {
+  List<Map<String, String>> weights = [];
+
+  void addWeight() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Add Weight (kg)"),
+        content: TextField(controller: controller, keyboardType: TextInputType.number),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() {
+                weights.add({'date': DateTime.now().toIso8601String(), 'weight': controller.text});
+              });
+              Navigator.pop(context);
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Welcome, ${widget.userName}")),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // Pregnancy info
-          Text("Current pregnancy week: $_currentWeek"),
-          Text("Trimester: $_trimester"),
-          Text(
-              "Expected due date: ${_dueDate!.year}-${_dueDate!.month.toString().padLeft(2, '0')}-${_dueDate!.day.toString().padLeft(2, '0')}"),
-          const Divider(height: 32),
-
-          // Pregnancy stages
-          const Text("Pregnancy Stages & Tips:",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(height: 8),
-          stages.isEmpty
-              ? const Center(child: CircularProgressIndicator())
-              : ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: stages.length,
-                  itemBuilder: (context, index) {
-                    final stage = stages[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      child: ExpansionTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.pinkAccent,
-                          child: Text(stage['week'].toString(),
-                              style: const TextStyle(color: Colors.white)),
-                        ),
-                        title: Text("Week ${stage['week']}"),
-                        subtitle: Text(stage['info']),
-                        children: [
-                          if (stage['imageUrl'] != null)
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Image.network(
-                                stage['imageUrl'],
-                                height: 150,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Text(
-                              "Tip: ${stage['tips']}",
-                              style:
-                                  const TextStyle(fontStyle: FontStyle.italic),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-
-          const SizedBox(height: 32),
-
-          // Appointments
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text("Appointments",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              IconButton(
-                  onPressed: showAddAppointmentDialog,
-                  icon: const Icon(Icons.add)),
-            ],
-          ),
-          if (appointments.isEmpty)
-            const Text("No appointments yet."),
-          for (var app in appointments)
-            ListTile(
-              title: Text(app.title),
-              subtitle: Text(
-                  "${app.date.year}-${app.date.month.toString().padLeft(2, '0')}-${app.date.day.toString().padLeft(2, '0')}"),
+      appBar: AppBar(title: const Text("Weight Tracker")),
+      body: Column(
+        children: [
+          ElevatedButton(onPressed: addWeight, child: const Text("Add Weight")),
+          Expanded(
+            child: ListView.builder(
+              itemCount: weights.length,
+              itemBuilder: (_, index) {
+                final w = weights[index];
+                return ListTile(title: Text("${w['weight']} kg"), subtitle: Text(w['date']!));
+              },
             ),
-
-          const SizedBox(height: 32),
-
-          // AI Chat Button
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ChatScreen(
-                    chatService: ChatService(apiKey: "<YOUR_OPENAI_API_KEY>"),
-                  ),
-                ),
-              );
-            },
-            child: const Text("Ask AI a Pregnancy Question"),
           ),
-        ]),
+        ],
       ),
     );
+  }
+}
+
+// -------------------
+// Hospital Bag Screen
+// -------------------
+class HospitalBagScreen extends StatefulWidget {
+  @override
+  State<HospitalBagScreen> createState() => _HospitalBagScreenState();
+}
+
+class _HospitalBagScreenState extends State<HospitalBagScreen> {
+  Map<String, bool> items = {
+    "Diapers": false,
+    "Clothes": false,
+    "Blankets": false,
+    "Baby Lotion": false,
+  };
+
+  void addItem() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Add Item"),
+        content: TextField(controller: controller),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() {
+                items[controller.text] = false;
+              });
+              Navigator.pop(context);
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Hospital Bag")),
+      body: Column(
+        children: [
+          ElevatedButton(onPressed: addItem, child: const Text("Add Item")),
+          Expanded(
+            child: ListView(
+              children: items.keys
+                  .map((k) => CheckboxListTile(
+                        title: Text(k),
+                        value: items[k],
+                        onChanged: (v) => setState(() => items[k] = v!),
+                      ))
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// -------------------
+// Contraction Timer Screen
+// -------------------
+class ContractionTimerScreen extends StatefulWidget {
+  @override
+  State<ContractionTimerScreen> createState() => _ContractionTimerScreenState();
+}
+
+class _ContractionTimerScreenState extends State<ContractionTimerScreen> {
+  List<DateTime> contractions = [];
+
+  void addContraction() => setState(() => contractions.add(DateTime.now()));
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Contraction Timer")),
+      body: Column(
+        children: [
+          ElevatedButton(onPressed: addContraction, child: const Text("Add Contraction")),
+          Expanded(
+            child: ListView.builder(
+              itemCount: contractions.length,
+              itemBuilder: (_, index) => ListTile(
+                title: Text("Contraction at ${contractions[index].toIso8601String()}"),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// -------------------
+// Emergency Contacts Screen
+// -------------------
+class EmergencyContactsScreen extends StatefulWidget {
+  @override
+  State<EmergencyContactsScreen> createState() => _EmergencyContactsScreenState();
+}
+
+class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
+  List<Map<String, String>> contacts = [
+    {"name": "Doctor", "phone": "123456789"},
+    {"name": "Partner", "phone": "987654321"},
+  ];
+
+  void addContact() {
+    final nameController = TextEditingController();
+    final phoneController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Add Contact"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: nameController, decoration: const InputDecoration(labelText: "Name")),
+            TextField(controller: phoneController, decoration: const InputDecoration(labelText: "Phone")),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() => contacts.add({'name': nameController.text, 'phone': phoneController.text}));
+              Navigator.pop(context);
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void callContact(String phone) async {
+    final url = "tel:$phone";
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Emergency Contacts")),
+      body: Column(
+        children: [
+          ElevatedButton(onPressed: addContact, child: const Text("Add Contact")),
+          Expanded(
+            child: ListView.builder(
+              itemCount: contacts.length,
+              itemBuilder: (_, index) {
+                final c = contacts[index];
+                return ListTile(
+                  title: Text(c['name']!),
+                  subtitle: Text(c['phone']!),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.call),
+                    onPressed: () => callContact(c['phone']!),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// -------------------
+// Placeholder Screens
+// -------------------
+class RemindersScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(appBar: AppBar(title: const Text("Reminders")), body: const Center(child: Text("Reminders will be here")));
+  }
+}
+
+class DoctorAppointmentsScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(appBar: AppBar(title: const Text("Doctor Appointments")), body: const Center(child: Text("Appointments will be here")));
+  }
+}
+
+class MedicationRemindersScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(appBar: AppBar(title: const Text("Medication Reminders")), body: const Center(child: Text("Medication reminders will be here")));
   }
 }
